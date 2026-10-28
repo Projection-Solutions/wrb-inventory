@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equipment Intake System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Print styles: Hide everything except the table section when printing */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printableTableSection, #printableTableSection * {
+        visibility: visible;
+      }
+      #printableTableSection {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+        border: none !important;
+      }
+      #tableContentContainer {
+        display: block !important; /* Force table expand on print */
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen py-8 px-4">
+
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Header & Quick GAS Setup Bar -->
+    <header class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
+      <div>
+        <h1 class="text-xl font-bold text-slate-900">Equipment Intake System</h1>
+        <p class="text-xs text-slate-500">Register, search, and manage equipment inventory.</p>
+      </div>
+      
+      <div class="flex items-center space-x-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+        <span id="statusIndicator" class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="Connected"></span>
+        <input type="url" id="gasUrlInput" placeholder="GAS Web App URL..." 
+          class="px-2 py-1 border border-slate-300 rounded text-xs w-48 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+        <button onclick="saveGasUrl()" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded transition">
+          Update
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Intake Form (All fields optional) -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 no-print">
+      <h2 class="text-base font-semibold text-slate-900 pb-3 mb-5 border-b border-slate-100 flex items-center">
+        <i data-lucide="plus-circle" class="w-5 h-5 mr-2 text-indigo-600"></i> New Equipment Entry
+      </h2>
+
+      <form id="equipmentForm" onsubmit="handleFormSubmit(event)" class="space-y-6">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Equipment Name</label>
+            <input type="text" id="equipmentName" placeholder="e.g. Adult Patient Simulator"
+              class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Manufacturer</label>
+            <input type="text" id="manufacturer" placeholder="e.g. Laerdal"
+              class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Serial Number</label>
+            <input type="text" id="serialNumber" placeholder="e.g. SN-994820"
+              class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">ECN Tag</label>
+            <input type="text" id="ecnTag" placeholder="e.g. ECN-2026-001"
+              class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Type</label>
+            <select id="equipmentType" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+              <option value="" selected>Select Equipment Type</option>
+              <option value="Task Trainer">Task Trainer</option>
+              <option value="Patient Mannequin">Patient Mannequin</option>
+              <option value="Virtual Reality">Virtual Reality</option>
+              <option value="IT">IT</option>
+              <option value="Biomed">Biomed</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Image URL</label>
+            <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg"
+              class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Location Details</label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Building</label>
+              <input type="text" id="building" placeholder="e.g. Health Sciences"
+                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Floor</label>
+              <input type="text" id="floor" placeholder="e.g. 3rd Floor"
+                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Room</label>
+              <input type="text" id="room" placeholder="e.g. Room 302B"
+                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" onclick="document.getElementById('equipmentForm').reset()" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">
+            Clear
+          </button>
+          <button type="submit" id="submitBtn" class="px-6 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm flex items-center space-x-2">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            <span>Submit Data</span>
+          </button>
+        </div>
+
+      </form>
+    </section>
+
+    <!-- Recorded Submissions Table Section (Expandable/Collapsible & Printable Area) -->
+    <section id="printableTableSection" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      
+      <!-- Table Header & Controls Bar -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        
+        <!-- Collapsible Toggle & Title -->
+        <button onclick="toggleTableCollapse()" class="flex items-center space-x-3 focus:outline-none group">
+          <i id="collapseChevron" data-lucide="chevron-down" class="w-5 h-5 text-slate-500 group-hover:text-slate-800 transition-transform duration-200"></i>
+          <h2 class="text-base font-semibold text-slate-900 flex items-center">
+            <i data-lucide="list" class="w-5 h-5 mr-2 text-indigo-600"></i> Recorded Submissions
+          </h2>
+          <span id="rowCount" class="text-xs bg-slate-100 px-2.5 py-1 rounded-full text-slate-600 font-medium">0 records</span>
+        </button>
+
+        <!-- Action Controls: Search, Export JSON, Import JSON, Print PDF -->
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto no-print">
+          <!-- Search Bar -->
+          <div class="relative flex-1 sm:flex-initial">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5"></i>
+            <input type="text" id="searchInput" oninput="filterTable()" placeholder="Search records..." 
+              class="w-full sm:w-48 pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+          </div>
+
+          <!-- Export JSON Button -->
+          <button onclick="exportJson()" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center space-x-1" title="Export JSON">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Export</span>
+          </button>
+
+          <!-- Import JSON Button -->
+          <label class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center space-x-1 cursor-pointer" title="Import JSON">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+            <span>Import</span>
+            <input type="file" id="importFile" accept=".json" onchange="importJson(event)" class="hidden" />
+          </label>
+
+          <!-- Print / PDF Button -->
+          <button onclick="window.print()" class="px-3 py-1.5 text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg flex items-center space-x-1" title="Print PDF">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+            <span>Print / PDF</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Collapsible Container -->
+      <div id="tableContentContainer" class="mt-4 transition-all duration-300">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
+                <th class="p-3">Image</th>
+                <th class="p-3">Time</th>
+                <th class="p-3">Equipment Name</th>
+                <th class="p-3">Manufacturer</th>
+                <th class="p-3">Serial #</th>
+                <th class="p-3">ECN Tag</th>
+                <th class="p-3">Type</th>
+                <th class="p-3">Building</th>
+                <th class="p-3">Floor</th>
+                <th class="p-3">Room</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTableBody" class="divide-y divide-slate-100 text-slate-700">
+              <tr id="emptyRow">
+                <td colspan="10" class="p-6 text-center text-slate-400 italic">Loading records from Google Sheet...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxjShbCKiajDIPXlUKVNtnAs-yaqbtrbxtvl66QGifW801EGERqUgpZedwOJBf5sq4a/exec";
+    let gasWebAppUrl = localStorage.getItem('GAS_URL') || DEFAULT_GAS_URL;
+    let allRecords = [];
+    let isTableCollapsed = false;
+
+    document.getElementById('gasUrlInput').value = gasWebAppUrl;
+
+    window.addEventListener('DOMContentLoaded', fetchRecords);
+
+    function toggleTableCollapse() {
+      const container = document.getElementById('tableContentContainer');
+      const chevron = document.getElementById('collapseChevron');
+      
+      isTableCollapsed = !isTableCollapsed;
+
+      if (isTableCollapsed) {
+        container.classList.add('hidden');
+        chevron.style.transform = 'rotate(-90deg)';
+      } else {
+        container.classList.remove('hidden');
+        chevron.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    async function fetchRecords() {
+      try {
+        const response = await fetch(gasWebAppUrl);
+        const result = await response.json();
+        
+        if (result.status === 'success' && result.data.length > 0) {
+          allRecords = result.data;
+          renderTable(allRecords);
+        } else {
+          document.getElementById('emptyRow').innerHTML = `<td colspan="10" class="p-6 text-center text-slate-400 italic">No equipment submissions recorded yet.</td>`;
+        }
+      } catch (err) {
+        console.error('Error fetching records:', err);
+        document.getElementById('emptyRow').innerHTML = `<td colspan="10" class="p-6 text-center text-red-400 italic">Failed to load records from Google Sheet.</td>`;
+      }
+    }
+
+    function saveGasUrl() {
+      const url = document.getElementById('gasUrlInput').value.trim();
+      if (url) {
+        gasWebAppUrl = url;
+        localStorage.setItem('GAS_URL', url);
+        document.getElementById('statusIndicator').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+        alert('Google Apps Script URL updated successfully!');
+        fetchRecords();
+      } else {
+        localStorage.removeItem('GAS_URL');
+        gasWebAppUrl = DEFAULT_GAS_URL;
+        document.getElementById('gasUrlInput').value = DEFAULT_GAS_URL;
+        alert('Reset to default Web App URL');
+      }
+    }
+
+    async function handleFormSubmit(event) {
+      event.preventDefault();
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
+
+      const record = {
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        equipmentName: document.getElementById('equipmentName').value.trim(),
+        manufacturer: document.getElementById('manufacturer').value.trim(),
+        serialNumber: document.getElementById('serialNumber').value.trim(),
+        ecnTag: document.getElementById('ecnTag').value.trim(),
+        equipmentType: document.getElementById('equipmentType').value,
+        building: document.getElementById('building').value.trim(),
+        floor: document.getElementById('floor').value.trim(),
+        room: document.getElementById('room').value.trim(),
+        imageUrl: document.getElementById('imageUrl').value.trim()
+      };
+
+      try {
+        if (gasWebAppUrl) {
+          await fetch(gasWebAppUrl, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(record)
+          });
+        }
+        
+        allRecords.unshift(record);
+        
+        // Auto-expand table if collapsed when adding new entry
+        if (isTableCollapsed) toggleTableCollapse();
+
+        renderTable(allRecords);
+        document.getElementById('equipmentForm').reset();
+        alert('Equipment saved successfully!');
+      } catch (err) {
+        alert('Error saving record: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i><span>Submit Data</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    function renderTable(records) {
+      const tbody = document.getElementById('recordsTableBody');
+      const rowCount = document.getElementById('rowCount');
+
+      rowCount.innerText = `${records.length} record${records.length === 1 ? '' : 's'}`;
+
+      if (records.length === 0) {
+        tbody.innerHTML = `<tr id="emptyRow"><td colspan="10" class="p-6 text-center text-slate-400 italic">No equipment submissions recorded yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = records.map(data => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3">
+            ${data.imageUrl ? `<img src="${escapeHtml(data.imageUrl)}" alt="Equipment" class="w-9 h-9 object-cover rounded border border-slate-200" onerror="this.onerror=null; this.src='https://via.placeholder.com/40?text=Err';" />` : `<span class="text-slate-300 text-[10px] italic">No Image</span>`}
+          </td>
+          <td class="p-3 text-slate-400 font-mono">${escapeHtml(data.timestamp || '')}</td>
+          <td class="p-3 font-medium text-slate-900">${escapeHtml(data.equipmentName || '—')}</td>
+          <td class="p-3">${escapeHtml(data.manufacturer || '—')}</td>
+          <td class="p-3 font-mono">${escapeHtml(data.serialNumber || '—')}</td>
+          <td class="p-3 font-mono">${escapeHtml(data.ecnTag || '—')}</td>
+          <td class="p-3">${data.equipmentType ? `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-medium">${escapeHtml(data.equipmentType)}</span>` : '—'}</td>
+          <td class="p-3">${escapeHtml(data.building || '—')}</td>
+          <td class="p-3">${escapeHtml(data.floor || '—')}</td>
+          <td class="p-3">${escapeHtml(data.room || '—')}</td>
+        </tr>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function filterTable() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allRecords.filter(item => {
+        return Object.values(item).some(val => String(val).toLowerCase().includes(query));
+      });
+      renderTable(filtered);
+    }
+
+    function exportJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allRecords, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `equipment_inventory_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (Array.isArray(importedData)) {
+            allRecords = importedData.concat(allRecords);
+            renderTable(allRecords);
+            alert(`Successfully imported ${importedData.length} records!`);
+          } else {
+            alert('Invalid JSON format: Expected an array of records.');
+          }
+        } catch (err) {
+          alert('Error parsing JSON file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
